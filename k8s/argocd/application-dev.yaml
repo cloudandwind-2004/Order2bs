@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: lunchorder-dev
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: lunchorder
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  source:
+    repoURL: git@github.com:Anab821/Order2bs.git
+    targetRevision: develop        # Branch develop → deploy dev
+    path: k8s/overlays/dev
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: order
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 2m
+
+  revisionHistoryLimit: 3

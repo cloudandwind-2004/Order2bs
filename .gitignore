@@ -1,0 +1,72 @@
+# ========================
+# Dependencies
+# ========================
+node_modules/
+vendor/
+.venv/
+
+# ========================
+# Build outputs
+# ========================
+dist/
+build/
+*.exe
+*.out
+backend/server
+
+# ========================
+# Environment
+# ========================
+.env
+.env.local
+.env.*.local
+
+# ========================
+# Uploads / media
+# ========================
+backend/uploads/
+*.jpg
+*.png
+*.jpeg
+*.gif
+*.pdf
+
+# ========================
+# IDE / Editor
+# ========================
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ========================
+# Logs
+# ========================
+*.log
+logs/
+
+# ========================
+# Docker volumes (local)
+# ========================
+pgdata/
+
+# ========================
+# Go
+# ========================
+*.test
+coverage.out
+
+# ========================
+# Test coverage
+# ========================
+coverage/
+
+# ========================
+# Kubernetes secrets (NEVER commit!)
+# ========================
+k8s/base/secret/secret.yaml
+k8s/**/secret.yaml
+*.kubeconfig
+kubeconfig

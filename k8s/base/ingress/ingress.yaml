@@ -1,0 +1,59 @@
+# ── Ingress (nginx ingress controller) ──────────────────────
+# Cài ingress controller trước: 
+#   kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.10.1/deploy/static/provider/cloud/deploy.yaml
+#
+# Nếu dùng cert-manager cho HTTPS:
+#   kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.14.5/cert-manager.yaml
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: lunchorder-ingress
+  namespace: lunchorder
+  labels:
+    app.kubernetes.io/name: lunchorder
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    # WebSocket support
+    nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection "upgrade";
+    # TLS (uncomment khi đã có cert-manager)
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx
+  # TLS (bỏ comment khi đã cấu hình cert-manager)
+  # tls:
+  #   - hosts:
+  #       - 192.168.49.2.nip.io
+  #     secretName: lunchorder-tls
+  rules:
+    - host: 192.168.49.2.nip.io   # 🔧 Đổi thành domain thật của bạn
+      http:
+        paths:
+          # API và WebSocket → backend
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: backend-svc
+                port:
+                  number: 8080
+          - path: /ws
+            pathType: Prefix
+            backend:
+              service:
+                name: backend-svc
+                port:
+                  number: 8080
+          # Tất cả còn lại → frontend
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend-svc
+                port:
+                  number: 80

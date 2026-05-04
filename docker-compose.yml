@@ -1,0 +1,66 @@
+version: '3.9'
+
+services:
+  # ── PostgreSQL ────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: lunchorder_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-lunchorder}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./backend/db/migrations:/docker-entrypoint-initdb.d
+    ports:
+      - "6543:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - lunchorder_net
+
+  # ── Backend (Golang) ──────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: lunchorder_api
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DB_HOST: postgres
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./backend/uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - lunchorder_net
+
+  # ── Frontend (React) ──────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: lunchorder_web
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - lunchorder_net
+
+networks:
+  lunchorder_net:
+    name: lunchorder_network
+
+volumes:
+  pgdata:
+    name: lunchorder_pgdata

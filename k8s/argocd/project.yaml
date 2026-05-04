@@ -1,0 +1,41 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: lunchorder
+  namespace: argocd
+spec:
+  description: "2BS LunchOrder Project — All environments"
+
+  # Chỉ cho phép sync từ repo này
+  sourceRepos:
+    - https://github.com/Anab821/Order2bs.git
+
+  # Chỉ cho phép deploy vào các namespace này
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: lunchorder
+    - server: https://kubernetes.default.svc
+      namespace: lunchorder-dev
+
+  # Các resource được phép tạo
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+
+  # Chính sách sync
+  syncWindows:
+    - kind: allow
+      schedule: '* * * * *'
+      duration: 24h
+      namespaces:
+        - lunchorder-dev
+    # Production chỉ deploy trong giờ hành chính (8:00-18:00 UTC+7 = 1:00-11:00 UTC)
+    - kind: allow
+      schedule: '0 1-11 * * 1-5'   # Thứ 2-6, 8h-18h (giờ VN)
+      duration: 10h
+      namespaces:
+        - lunchorder

@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: order
+
+resources:
+  - namespace/namespace.yaml
+  - configmap/configmap.yaml
+  - database/postgres.yaml
+  - backend/backend.yaml
+  - frontend/nginx-configmap.yaml
+  - frontend/frontend.yaml
+  - ingress/ingress.yaml
+
+# Labels chung cho tất cả resources
+commonLabels:
+  app.kubernetes.io/managed-by: kustomize
+  app.kubernetes.io/part-of: lunchorder

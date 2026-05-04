@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: lunchorder-config
+  namespace: lunchorder
+  labels:
+    app.kubernetes.io/name: lunchorder
+data:
+  APP_ENV: "production"
+  APP_PORT: "8080"
+  DB_HOST: "postgres-svc"
+  DB_PORT: "5432"
+  DB_NAME: "lunchorder"
+  DB_USER: "postgres"
+  DB_SSLMODE: "disable"
+  JWT_EXPIRE_HOURS: "24"
+  UPLOAD_DIR: "/app/uploads"
+  MAX_UPLOAD_SIZE_MB: "5"
+  TZ: "Asia/Ho_Chi_Minh"

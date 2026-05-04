@@ -1,0 +1,43 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: lunchorder-prod
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: lunchorder
+  # Tự xóa Application khi xóa resource này (cascade delete)
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  # ── Nguồn (Git repo) ──────────────────────────────────────
+  source:
+    repoURL: https://github.com/Anab821/Order2bs.git
+    targetRevision: main           # Branch cần sync
+    path: k8s/overlays/prod        # Kustomize overlay cần dùng
+
+  # ── Đích (Cluster) ────────────────────────────────────────
+  destination:
+    server: https://kubernetes.default.svc   # cluster local
+    namespace: lunchorder
+
+  # ── Sync Policy ───────────────────────────────────────────
+  syncPolicy:
+    automated:
+      prune: true        # Xóa resource không còn trong git
+      selfHeal: true     # Tự phục hồi nếu ai đó đổi trực tiếp trên cluster
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true        # Tạo namespace nếu chưa có
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
+  # ── Health checks ─────────────────────────────────────────
+  revisionHistoryLimit: 5
