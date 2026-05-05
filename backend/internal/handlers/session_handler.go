@@ -84,7 +84,45 @@ func (h *SessionHandler) Update(c *gin.Context) {
 		return
 	}
 
-	h.DB.Model(&session).Updates(updates)
+	// Gán từng trường một để không bỏ qua zero-values
+	if v, ok := updates["name"].(string); ok {
+		session.Name = v
+	}
+	if v, ok := updates["description"].(string); ok {
+		session.Description = v
+	}
+	if v, ok := updates["start_time"].(string); ok {
+		session.StartTime = v
+	}
+	if v, ok := updates["end_time"].(string); ok {
+		session.EndTime = v
+	}
+	if v, ok := updates["company_subsidy"].(float64); ok {
+		session.CompanySubsidy = v
+	}
+	if v, ok := updates["is_active"].(bool); ok {
+		session.IsActive = v
+	}
+	if v, ok := updates["schedule_type"].(string); ok {
+		session.ScheduleType = v
+	}
+	if v, ok := updates["day_of_week"].(string); ok {
+		session.DayOfWeek = v
+	}
+	if v, ok := updates["start_date"].(string); ok {
+		session.StartDate = v
+	}
+	if v, ok := updates["end_date"].(string); ok {
+		session.EndDate = v
+	}
+
+	if err := h.DB.Save(&session).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Reload từ DB để trả về dữ liệu mới nhất
+	h.DB.First(&session, "id = ?", id)
 	c.JSON(http.StatusOK, session)
 }
 
