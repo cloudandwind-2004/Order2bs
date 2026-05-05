@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 	"unicode"
@@ -167,13 +168,13 @@ func (h *MenuHandler) BulkImportMenu(c *gin.Context) {
 				priceStr := matches[0]
 				if strings.HasSuffix(strings.ToLower(priceStr), "k") {
 					val := strings.TrimSuffix(strings.ToLower(priceStr), "k")
-					if p, err := strings.ParseFloat(val, 64); err == nil {
+					if p, err := strconv.ParseFloat(val, 64); err == nil {
 						currentPrice = p * 1000
 					}
 				} else {
 					// Xử lý dấu chấm/phẩy ngăn cách nghìn
 					cleanPrice := strings.NewReplacer(".", "", ",", "").Replace(priceStr)
-					if p, err := strings.ParseFloat(cleanPrice, 64); err == nil {
+					if p, err := strconv.ParseFloat(cleanPrice, 64); err == nil {
 						currentPrice = p
 					}
 				}
@@ -214,12 +215,12 @@ func (h *MenuHandler) BulkImportMenu(c *gin.Context) {
 				priceVal := 0.0
 				if strings.HasSuffix(strings.ToLower(priceStr), "k") {
 					val := strings.TrimSuffix(strings.ToLower(priceStr), "k")
-					if p, err := strings.ParseFloat(val, 64); err == nil {
+					if p, err := strconv.ParseFloat(val, 64); err == nil {
 						priceVal = p * 1000
 					}
 				} else {
 					cleanPrice := strings.NewReplacer(".", "", ",", "").Replace(priceStr)
-					if p, err := strings.ParseFloat(cleanPrice, 64); err == nil {
+					if p, err := strconv.ParseFloat(cleanPrice, 64); err == nil {
 						priceVal = p
 					}
 				}
