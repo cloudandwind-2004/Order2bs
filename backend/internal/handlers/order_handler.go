@@ -104,11 +104,6 @@ func (h *OrderHandler) Create(c *gin.Context) {
 				if err := json.Unmarshal([]byte(fullSession.ComboRule.CategoryRules), &catRules); err == nil {
 					// Count items per category in the order
 					orderCatCounts := make(map[string]int)
-					for _, item := range items {
-						// Note: items slice might be smaller than req.ItemIDs if some IDs are invalid, 
-						// but req.ItemIDs is what the user actually sent (potentially with duplicates).
-						// We should count the actual items sent in req.ItemIDs using the itemMap.
-					}
 					
 					// Recount carefully to handle duplicates correctly
 					for _, itemIDStr := range req.ItemIDs {
