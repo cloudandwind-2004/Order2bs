@@ -32,7 +32,11 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'lunchorder-auth',
-      partialize: (state) => ({ token: state.token, user: state.user }),
+      partialize: (state) => ({ 
+        token: state.token, 
+        user: state.user, 
+        isAuthenticated: state.isAuthenticated 
+      }),
     }
   )
 );
