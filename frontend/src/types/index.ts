@@ -65,6 +65,7 @@ export interface ComboRule {
   combo_price: number;    // e.g. 45000
   is_active: boolean;
   description?: string;
+  category_rules?: string; // JSON string
 }
 
 // ─── Order ────────────────────────────────────────────────────

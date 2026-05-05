@@ -48,6 +48,7 @@ func AutoMigrate(db *gorm.DB) {
 		&models.SelfCookLog{},
 		&models.DashboardSummarySnapshot{},
 		&models.DashboardMonthlyStat{},
+		&models.ComboRule{},
 	)
 	if err != nil {
 		log.Fatalf("❌ AutoMigrate failed: %v", err)

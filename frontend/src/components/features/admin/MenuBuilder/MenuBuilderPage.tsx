@@ -139,6 +139,7 @@ export default function MenuBuilderPage() {
           <ComboRulePanel
             sessionId={id}
             sessionName={session.name}
+            categories={session.categories || []}
             initialRule={session.combo_rule}
             onClose={() => setShowComboPanel(false)}
           />

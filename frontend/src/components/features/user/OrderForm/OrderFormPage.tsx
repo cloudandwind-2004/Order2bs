@@ -71,13 +71,38 @@ export default function OrderFormPage() {
   const clearCart = () => setCart({});
 
   // Pricing
-  const isComboComplete = comboRule?.is_active && totalItems >= comboRule.required_items;
+  const isComboComplete = useMemo(() => {
+    if (!comboRule || !comboRule.is_active) return false;
+    
+    // If there are category-specific rules
+    if (comboRule.category_rules && comboRule.category_rules !== '[]') {
+      try {
+        const rules: { category_id: string; count: number }[] = JSON.parse(comboRule.category_rules);
+        
+        // Count items per category in cart
+        const catCounts: Record<string, number> = {};
+        Object.values(cart).forEach(v => {
+          const catId = v.item.category_id;
+          catCounts[catId] = (catCounts[catId] || 0) + v.qty;
+        });
+
+        // Check if all rules met
+        return rules.every(r => (catCounts[r.category_id] || 0) >= r.count);
+      } catch {
+        return totalItems >= comboRule.required_items;
+      }
+    }
+    
+    // Fallback to simple count
+    return totalItems >= comboRule.required_items;
+  }, [cart, comboRule, totalItems]);
+
   const subsidyAmount = session?.company_subsidy || 0;
 
   const totalPrice = useMemo(() => {
     if (isComboComplete && comboRule) return comboRule.combo_price;
     return cartList.reduce((s, v) => s + v.item.price * v.qty, 0);
-  }, [cart, isComboComplete, comboRule]);
+  }, [cartList, isComboComplete, comboRule]);
 
   const debt = Math.max(0, totalPrice - subsidyAmount);
 

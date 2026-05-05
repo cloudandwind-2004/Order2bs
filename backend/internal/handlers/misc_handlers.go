@@ -19,7 +19,11 @@ func (h *MenuHandler) GetSessionMenu(c *gin.Context) {
 	id := c.Param("id")
 	var session models.MealSession
 	if err := h.DB.Preload("Categories.Items").Preload("ComboRule").First(&session, "id = ?", id).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "session not found"})
+		if err == gorm.ErrRecordNotFound {
+			c.JSON(http.StatusNotFound, gin.H{"error": "session not found"})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "database error: " + err.Error()})
+		}
 		return
 	}
 	// Kiểm tra xem đã có đơn nào trong buổi này ở trạng thái 'shipping' hoặc 'delivered' chưa
@@ -99,11 +103,17 @@ func (h *MenuHandler) SaveComboRule(c *gin.Context) {
 
 	// Upsert: Try to find existing rule for this session
 	var existing models.ComboRule
-	if err := h.DB.Where("session_id = ?", rule.SessionID).First(&existing).Error; err == nil {
+	var err error
+	if err = h.DB.Where("session_id = ?", rule.SessionID).First(&existing).Error; err == nil {
 		rule.ID = existing.ID
-		h.DB.Save(&rule)
+		err = h.DB.Save(&rule).Error
 	} else {
-		h.DB.Create(&rule)
+		err = h.DB.Create(&rule).Error
+	}
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save combo rule: " + err.Error()})
+		return
 	}
 
 	c.JSON(http.StatusOK, rule)
@@ -113,7 +123,11 @@ func (h *MenuHandler) GetComboRule(c *gin.Context) {
 	sessionID := c.Param("id")
 	var rule models.ComboRule
 	if err := h.DB.Where("session_id = ?", sessionID).First(&rule).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "combo rule not found"})
+		if err == gorm.ErrRecordNotFound {
+			c.JSON(http.StatusNotFound, gin.H{"error": "combo rule not found"})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "database error: " + err.Error()})
+		}
 		return
 	}
 	c.JSON(http.StatusOK, rule)

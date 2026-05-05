@@ -121,6 +121,7 @@ type ComboRule struct {
 	ComboPrice    float64   `gorm:"not null" json:"combo_price"`
 	IsActive      bool      `gorm:"default:false;index" json:"is_active"`
 	Description   string    `json:"description"`
+	CategoryRules string    `gorm:"type:text" json:"category_rules"` // JSON string: [{"category_id": "...", "count": 1}, ...]
 	CreatedAt     time.Time `json:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at"`
 }

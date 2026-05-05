@@ -1,30 +1,45 @@
 import { useState, useEffect } from 'react';
-import { Settings2, Zap, ToggleLeft, ToggleRight, Save, Info, X } from 'lucide-react';
+import { Zap, ToggleLeft, ToggleRight, Save, X, Plus, Minus, CheckCircle2 } from 'lucide-react';
 import { menuApi } from '@/api';
-import type { ComboRule } from '@/types';
+import type { ComboRule, MenuCategory } from '@/types';
 import toast from 'react-hot-toast';
 
 interface Props {
   sessionId: string;
   sessionName: string;
+  categories: MenuCategory[];
   initialRule?: ComboRule | null;
   onClose?: () => void;
 }
 
-export default function ComboRulePanel({ sessionId, sessionName, initialRule, onClose }: Props) {
+interface CatRule {
+  category_id: string;
+  count: number;
+}
+
+export default function ComboRulePanel({ sessionId, categories, initialRule, onClose }: Props) {
   const [rule, setRule] = useState<ComboRule>({
     session_id: sessionId,
-    name: 'Combo 3 món',
+    name: 'Combo tiêu chuẩn',
     required_items: 3,
-    combo_price: 45000,
+    combo_price: 35000,
     is_active: false,
-    description: 'Chọn đủ 3 món để hưởng giá combo đặc biệt!',
+    description: 'Chọn đủ các món theo quy định để được giá combo!',
+    category_rules: '[]'
   });
+
+  const [catRules, setCatRules] = useState<CatRule[]>([]);
   const [isDirty, setIsDirty] = useState(false);
 
   useEffect(() => {
     if (initialRule) {
       setRule(initialRule);
+      try {
+        const parsed = JSON.parse(initialRule.category_rules || '[]');
+        setCatRules(parsed);
+      } catch {
+        setCatRules([]);
+      }
     }
   }, [initialRule]);
 
@@ -33,31 +48,34 @@ export default function ComboRulePanel({ sessionId, sessionName, initialRule, on
     setIsDirty(true);
   };
 
+  const updateCatRule = (catId: string, count: number) => {
+    setCatRules(prev => {
+      const idx = prev.findIndex(r => r.category_id === catId);
+      let next = [...prev];
+      if (idx >= 0) {
+        if (count <= 0) next = next.filter(r => r.category_id !== catId);
+        else next[idx] = { category_id: catId, count };
+      } else if (count > 0) {
+        next.push({ category_id: catId, count });
+      }
+      
+      // Update total required items based on cat rules
+      const total = next.reduce((s, r) => s + r.count, 0);
+      update({ required_items: total, category_rules: JSON.stringify(next) });
+      return next;
+    });
+  };
+
   const handleSave = async () => {
     try {
-      await menuApi.saveComboRule(sessionId, rule);
+      const payload = { ...rule, category_rules: JSON.stringify(catRules) };
+      await menuApi.saveComboRule(sessionId, payload);
       setIsDirty(false);
-      toast.success('Đã lưu cài đặt combo lên hệ thống! 🎉');
+      toast.success('Đã lưu cài đặt combo! 🎉');
     } catch {
       toast.error('Lỗi khi lưu cài đặt combo');
     }
   };
-
-  const handleReset = () => {
-    setRule({
-      session_id: sessionId,
-      name: 'Combo 3 món',
-      required_items: 3,
-      combo_price: 45000,
-      is_active: false,
-      description: 'Chọn đủ 3 món để hưởng giá combo đặc biệt!',
-    });
-    setIsDirty(true);
-  };
-
-  const pricePerItem = rule.required_items > 0
-    ? Math.round(rule.combo_price / rule.required_items)
-    : 0;
 
   return (
     <div style={{
@@ -65,239 +83,114 @@ export default function ComboRulePanel({ sessionId, sessionName, initialRule, on
       borderRadius: 'var(--r-2xl)',
       border: '2px solid var(--c-border-light)',
       overflow: 'hidden',
-      boxShadow: 'var(--shadow-lg)',
+      boxShadow: 'var(--shadow-xl)',
     }}>
       {/* Header */}
       <div style={{
-        background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
-        padding: '20px 24px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
+        background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+        padding: '24px',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           <div style={{
-            width: 40, height: 40, borderRadius: 'var(--r-md)',
-            background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(10px)',
+            width: 44, height: 44, borderRadius: 'var(--r-lg)',
+            background: 'rgba(240,192,64,0.15)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
+            border: '1px solid rgba(240,192,64,0.3)'
           }}>
-            <Zap size={20} color="#f0c040" />
+            <Zap size={22} color="#f0c040" />
           </div>
           <div>
-            <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.6)', letterSpacing: '2px', textTransform: 'uppercase' }}>
-              CẤU HÌNH COMBO
-            </div>
-            <div style={{ color: '#fff', fontWeight: 800, fontSize: '1rem' }}>
-              Menu gọi chọn món động
-            </div>
+            <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.5)', letterSpacing: '2px', fontWeight: 800 }}>THIẾT LẬP COMBO THÔNG MINH</div>
+            <div style={{ color: '#fff', fontWeight: 850, fontSize: '1.1rem' }}>Quy tắc chọn món</div>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          {/* Active Toggle */}
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
           <button
             type="button"
             onClick={() => update({ is_active: !rule.is_active })}
             style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              background: rule.is_active ? 'rgba(91,200,107,0.2)' : 'rgba(255,255,255,0.1)',
-              border: `1px solid ${rule.is_active ? 'rgba(91,200,107,0.5)' : 'rgba(255,255,255,0.2)'}`,
-              borderRadius: 'var(--r-full)',
-              padding: '6px 16px',
-              cursor: 'pointer',
-              color: rule.is_active ? '#7fff7f' : 'rgba(255,255,255,0.7)',
-              fontSize: '0.8rem', fontWeight: 700,
-              transition: 'all 0.3s ease',
+              display: 'flex', alignItems: 'center', gap: 10,
+              background: rule.is_active ? 'var(--c-success)' : 'rgba(255,255,255,0.1)',
+              border: 'none', borderRadius: 'var(--r-full)',
+              padding: '8px 20px', cursor: 'pointer',
+              color: '#fff', fontSize: '0.85rem', fontWeight: 800,
+              transition: 'all 0.2s ease',
             }}
           >
-            {rule.is_active
-              ? <><ToggleRight size={18} color="#7fff7f" /> BẬT</>
-              : <><ToggleLeft size={18} /> TẮT</>
-            }
+            {rule.is_active ? <><CheckCircle2 size={18} /> ĐANG BẬT</> : <><ToggleLeft size={18} /> ĐANG TẮT</>}
           </button>
           {onClose && (
-            <button type="button" onClick={onClose}
-              style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 'var(--r-md)', padding: 8, cursor: 'pointer', color: '#fff' }}
-            >
-              <X size={16} />
+            <button type="button" onClick={onClose} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 'var(--r-md)', padding: 10, cursor: 'pointer', color: '#fff' }}>
+              <X size={18} />
             </button>
           )}
         </div>
       </div>
 
-      <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: 20 }}>
-
-        {/* Status Banner */}
-        {rule.is_active ? (
-          <div style={{
-            background: 'linear-gradient(135deg, rgba(91,200,107,0.1), rgba(91,200,107,0.05))',
-            border: '1px solid rgba(91,200,107,0.3)',
-            borderRadius: 'var(--r-lg)',
-            padding: '12px 16px',
-            display: 'flex', alignItems: 'center', gap: 10,
-            color: 'var(--c-success)',
-          }}>
-            <Zap size={16} />
-            <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>
-              Combo đang hoạt động — Người dùng sẽ thấy tùy chọn chọn nhiều món!
-            </span>
-          </div>
-        ) : (
-          <div style={{
-            background: 'rgba(0,0,0,0.04)',
-            border: '1px solid var(--c-border-light)',
-            borderRadius: 'var(--r-lg)',
-            padding: '12px 16px',
-            display: 'flex', alignItems: 'center', gap: 10,
-            color: 'var(--c-text-muted)',
-          }}>
-            <Info size={16} />
-            <span style={{ fontSize: '0.85rem' }}>
-              Bật combo để người dùng gọi chọn nhiều món với giá ưu đãi.
-            </span>
-          </div>
-        )}
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-          {/* Tên combo */}
-          <div className="input-group" style={{ gridColumn: '1 / -1' }}>
-            <label style={{ fontWeight: 800, fontSize: '0.72rem', color: 'var(--c-primary)', textTransform: 'uppercase', letterSpacing: '1px' }}>
-              Tên combo
-            </label>
-            <input
-              className="input"
-              placeholder="Ví dụ: Combo 3 món, Cơm phần..."
-              value={rule.name}
-              onChange={e => update({ name: e.target.value })}
-            />
-          </div>
-
-          {/* Số món tối thiểu */}
+      <div style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: 28 }}>
+        
+        {/* Basic Info */}
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 20 }}>
           <div className="input-group">
-            <label style={{ fontWeight: 800, fontSize: '0.72rem', color: 'var(--c-primary)', textTransform: 'uppercase', letterSpacing: '1px' }}>
-              Số món cần chọn
-            </label>
-            <input
-              className="input"
-              type="number"
-              min={1} max={10}
-              value={rule.required_items}
-              onChange={e => update({ required_items: Math.max(1, parseInt(e.target.value) || 1) })}
-              style={{ fontWeight: 700, fontSize: '1.1rem', textAlign: 'center' }}
-            />
-            <div style={{ fontSize: '0.72rem', color: 'var(--c-text-muted)', marginTop: 4 }}>
-              Chọn đủ số này → áp giá combo
-            </div>
+            <label style={{ fontWeight: 800, fontSize: '0.75rem', color: 'var(--c-primary)', marginBottom: 8, display: 'block' }}>TÊN COMBO</label>
+            <input className="input" value={rule.name} onChange={e => update({ name: e.target.value })} placeholder="Ví dụ: Combo Cơm Trưa 35k" />
           </div>
-
-          {/* Giá combo */}
           <div className="input-group">
-            <label style={{ fontWeight: 800, fontSize: '0.72rem', color: 'var(--c-primary)', textTransform: 'uppercase', letterSpacing: '1px' }}>
-              Giá combo (VNĐ)
-            </label>
-            <input
-              className="input"
-              type="number"
-              step={1000}
-              min={0}
-              value={rule.combo_price}
-              onChange={e => update({ combo_price: parseInt(e.target.value) || 0 })}
-              style={{ fontWeight: 700, fontSize: '1.1rem', textAlign: 'center' }}
-            />
-            <div style={{ fontSize: '0.72rem', color: 'var(--c-text-muted)', marginTop: 4 }}>
-              ≈ {pricePerItem.toLocaleString()}đ/món
-            </div>
-          </div>
-
-          {/* Mô tả */}
-          <div className="input-group" style={{ gridColumn: '1 / -1' }}>
-            <label style={{ fontWeight: 800, fontSize: '0.72rem', color: 'var(--c-primary)', textTransform: 'uppercase', letterSpacing: '1px' }}>
-              Mô tả hiển thị (tuỳ chọn)
-            </label>
-            <input
-              className="input"
-              placeholder="Ví dụ: Chọn đủ 3 món để hưởng giá ưu đãi!"
-              value={rule.description || ''}
-              onChange={e => update({ description: e.target.value })}
-            />
+            <label style={{ fontWeight: 800, fontSize: '0.75rem', color: 'var(--c-primary)', marginBottom: 8, display: 'block' }}>GIÁ COMBO (VNĐ)</label>
+            <input className="input" type="number" step={1000} value={rule.combo_price} onChange={e => update({ combo_price: parseInt(e.target.value) || 0 })} style={{ fontWeight: 800, fontSize: '1.1rem' }} />
           </div>
         </div>
 
-        {/* Live Preview */}
-        <div style={{
-          background: 'linear-gradient(135deg, rgba(201,116,147,0.08), rgba(212,168,83,0.05))',
-          border: '1px solid var(--c-primary-light)',
-          borderRadius: 'var(--r-xl)',
-          padding: '16px 20px',
-        }}>
-          <div style={{ fontSize: '0.72rem', color: 'var(--c-primary)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: 12 }}>
-            👁 Xem trước combo
+        {/* Category Rules Selection */}
+        <div style={{ background: 'var(--c-bg)', borderRadius: 'var(--r-xl)', padding: '24px', border: '1px solid var(--c-border-light)' }}>
+          <label style={{ fontWeight: 800, fontSize: '0.85rem', color: 'var(--c-text)', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+            🍱 Cấu trúc Combo (Số lượng món mỗi nhóm)
+          </label>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {categories.map(cat => {
+              const currentRule = catRules.find(r => r.category_id === cat.id);
+              const count = currentRule?.count || 0;
+              return (
+                <div key={cat.id} style={{ 
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
+                  padding: '12px 16px', background: count > 0 ? '#fff' : 'transparent',
+                  border: `1px solid ${count > 0 ? 'var(--c-primary-light)' : 'var(--c-border-light)'}`,
+                  borderRadius: 'var(--r-lg)', transition: 'all 0.2s'
+                }}>
+                  <div style={{ fontWeight: 700, color: count > 0 ? 'var(--c-primary-dark)' : 'var(--c-text-muted)' }}>{cat.name}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                    <button type="button" onClick={() => updateCatRule(cat.id, count - 1)} className="btn-icon" style={{ width: 32, height: 32, borderRadius: '50%', background: '#fff' }}><Minus size={14}/></button>
+                    <span style={{ minWidth: 30, textAlign: 'center', fontWeight: 900, fontSize: '1.1rem', color: count > 0 ? 'var(--c-primary)' : 'var(--c-text-muted)' }}>{count}</span>
+                    <button type="button" onClick={() => updateCatRule(cat.id, count + 1)} className="btn-icon" style={{ width: 32, height: 32, borderRadius: '50%', background: '#fff' }}><Plus size={14}/></button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div>
-              <div style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--c-text)' }}>
-                {rule.name || 'Tên combo...'}
-              </div>
-              <div style={{ fontSize: '0.85rem', color: 'var(--c-text-muted)', marginTop: 4 }}>
-                {rule.description || `Chọn ${rule.required_items} món bất kỳ từ thực đơn`}
-              </div>
-            </div>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{
-                fontSize: '1.5rem', fontWeight: 900,
-                color: 'var(--c-primary)',
-                background: 'linear-gradient(135deg, var(--c-primary), var(--c-accent))',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-              }}>
-                {rule.combo_price.toLocaleString()}đ
-              </div>
-              <div style={{ fontSize: '0.72rem', color: 'var(--c-text-muted)', fontWeight: 700 }}>
-                cho {rule.required_items} món
-              </div>
-            </div>
-          </div>
-
-          {/* Item slots preview */}
-          <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
-            {Array.from({ length: rule.required_items }).map((_, i) => (
-              <div key={i} style={{
-                flex: '0 0 auto',
-                padding: '4px 14px',
-                background: i < 2 ? 'var(--c-primary)' : 'var(--c-primary-soft)',
-                color: i < 2 ? '#fff' : 'var(--c-primary)',
-                borderRadius: 'var(--r-full)',
-                fontSize: '0.72rem',
-                fontWeight: 700,
-                border: '2px solid var(--c-primary)',
-              }}>
-                Món {i + 1} {i < 2 ? '✓' : '○'}
-              </div>
-            ))}
+          <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px dashed var(--c-border-light)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+             <span style={{ fontSize: '0.9rem', color: 'var(--c-text-muted)' }}>Tổng số món trong combo:</span>
+             <span style={{ fontSize: '1.2rem', fontWeight: 900, color: 'var(--c-primary)' }}>{rule.required_items}</span>
           </div>
         </div>
 
-        {/* Actions */}
-        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-          <button
-            type="button"
-            className="btn btn-ghost"
-            onClick={handleReset}
-            style={{ fontSize: '0.85rem' }}
-          >
-            Đặt lại mặc định
-          </button>
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={handleSave}
+        {/* Description */}
+        <div className="input-group">
+          <label style={{ fontWeight: 800, fontSize: '0.75rem', color: 'var(--c-primary)', marginBottom: 8, display: 'block' }}>MÔ TẢ HIỂN THỊ</label>
+          <textarea className="input" rows={2} value={rule.description} onChange={e => update({ description: e.target.value })} placeholder="Ví dụ: Chọn 1 mặn, 1 phụ, 1 rau để có giá ưu đãi!" style={{ resize: 'none' }} />
+        </div>
+
+        {/* Footer Actions */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, paddingTop: 10 }}>
+          <button type="button" className="btn btn-ghost" onClick={onClose}>Hủy bỏ</button>
+          <button 
+            type="button" 
+            className="btn btn-primary" 
+            onClick={handleSave} 
             disabled={!isDirty}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              opacity: isDirty ? 1 : 0.6,
-            }}
+            style={{ padding: '12px 32px', display: 'flex', alignItems: 'center', gap: 8, fontSize: '1rem' }}
           >
-            <Save size={16} />
-            {isDirty ? 'Lưu cài đặt 🌸' : 'Đã lưu'}
+            <Save size={18} /> {isDirty ? 'Lưu cấu hình ngay 🌸' : 'Đã lưu cấu hình'}
           </button>
         </div>
       </div>

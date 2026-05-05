@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -92,7 +93,48 @@ func (h *OrderHandler) Create(c *gin.Context) {
 		// Apply combo pricing if rule exists and is active
 		finalPrice := totalItemPrice
 		if fullSession.ComboRule != nil && fullSession.ComboRule.IsActive {
-			if len(req.ItemIDs) >= fullSession.ComboRule.RequiredItems {
+			isComboMatch := false
+			
+			// If there are category-specific rules, validate them
+			if fullSession.ComboRule.CategoryRules != "" && fullSession.ComboRule.CategoryRules != "[]" {
+				var catRules []struct {
+					CategoryID string `json:"category_id"`
+					Count      int    `json:"count"`
+				}
+				if err := json.Unmarshal([]byte(fullSession.ComboRule.CategoryRules), &catRules); err == nil {
+					// Count items per category in the order
+					orderCatCounts := make(map[string]int)
+					for _, item := range items {
+						// Note: items slice might be smaller than req.ItemIDs if some IDs are invalid, 
+						// but req.ItemIDs is what the user actually sent (potentially with duplicates).
+						// We should count the actual items sent in req.ItemIDs using the itemMap.
+					}
+					
+					// Recount carefully to handle duplicates correctly
+					for _, itemIDStr := range req.ItemIDs {
+						if item, ok := itemMap[itemIDStr]; ok {
+							orderCatCounts[item.CategoryID.String()]++
+						}
+					}
+
+					// Check if all rules are satisfied
+					matches := true
+					for _, rule := range catRules {
+						if orderCatCounts[rule.CategoryID] < rule.Count {
+							matches = false
+							break
+						}
+					}
+					isComboMatch = matches
+				}
+			} else {
+				// Fallback to simple item count rule
+				if len(req.ItemIDs) >= fullSession.ComboRule.RequiredItems {
+					isComboMatch = true
+				}
+			}
+
+			if isComboMatch {
 				finalPrice = fullSession.ComboRule.ComboPrice
 			}
 		}
