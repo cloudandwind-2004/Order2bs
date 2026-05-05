@@ -382,7 +382,7 @@ export default function MenuBuilderPage() {
             <div className="modal-body" style={{ padding: '28px' }}>
               <p style={{ fontSize: '0.85rem', color: 'var(--c-text-muted)', marginBottom: 16 }}>
                 Dán danh sách món ăn vào đây. Hệ thống sẽ tự tách Nhóm và Món dựa trên dấu ":" hoặc Emoji.
-                Sử dụng "=> 20k" để đặt giá cho nhóm món bên dưới.
+                Sử dụng "={'>'} 20k" để đặt giá cho nhóm món bên dưới.
               </p>
               <textarea
                 className="input"
