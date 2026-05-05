@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Zap, ToggleLeft, ToggleRight, Save, X, Plus, Minus, CheckCircle2 } from 'lucide-react';
+import { Zap, ToggleLeft, Save, Plus, Minus, CheckCircle2 } from 'lucide-react';
 import { menuApi } from '@/api';
 import type { ComboRule, MenuCategory } from '@/types';
 import toast from 'react-hot-toast';
@@ -9,7 +9,7 @@ interface Props {
   sessionName: string;
   categories: MenuCategory[];
   initialRule?: ComboRule | null;
-  onClose?: () => void;
+  onSaved?: () => void;
 }
 
 interface CatRule {
@@ -17,7 +17,7 @@ interface CatRule {
   count: number;
 }
 
-export default function ComboRulePanel({ sessionId, categories, initialRule, onClose }: Props) {
+export default function ComboRulePanel({ sessionId, categories, initialRule, onSaved }: Props) {
   const [rule, setRule] = useState<ComboRule>({
     session_id: sessionId,
     name: 'Combo tiêu chuẩn',
@@ -72,6 +72,7 @@ export default function ComboRulePanel({ sessionId, categories, initialRule, onC
       await menuApi.saveComboRule(sessionId, payload);
       setIsDirty(false);
       toast.success('Đã lưu cài đặt combo! 🎉');
+      onSaved?.();
     } catch {
       toast.error('Lỗi khi lưu cài đặt combo');
     }
@@ -105,8 +106,7 @@ export default function ComboRulePanel({ sessionId, categories, initialRule, onC
             <div style={{ color: '#fff', fontWeight: 850, fontSize: '1.1rem' }}>Quy tắc chọn món</div>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <button
+        <button
             type="button"
             onClick={() => update({ is_active: !rule.is_active })}
             style={{
@@ -120,12 +120,6 @@ export default function ComboRulePanel({ sessionId, categories, initialRule, onC
           >
             {rule.is_active ? <><CheckCircle2 size={18} /> ĐANG BẬT</> : <><ToggleLeft size={18} /> ĐANG TẮT</>}
           </button>
-          {onClose && (
-            <button type="button" onClick={onClose} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 'var(--r-md)', padding: 10, cursor: 'pointer', color: '#fff' }}>
-              <X size={18} />
-            </button>
-          )}
-        </div>
       </div>
 
       <div style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: 28 }}>
@@ -181,16 +175,15 @@ export default function ComboRulePanel({ sessionId, categories, initialRule, onC
         </div>
 
         {/* Footer Actions */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, paddingTop: 10 }}>
-          <button type="button" className="btn btn-ghost" onClick={onClose}>Hủy bỏ</button>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: 10 }}>
           <button 
             type="button" 
             className="btn btn-primary" 
             onClick={handleSave} 
             disabled={!isDirty}
-            style={{ padding: '12px 32px', display: 'flex', alignItems: 'center', gap: 8, fontSize: '1rem' }}
+            style={{ padding: '14px 40px', display: 'flex', alignItems: 'center', gap: 10, fontSize: '1rem' }}
           >
-            <Save size={18} /> {isDirty ? 'Lưu cấu hình ngay 🌸' : 'Đã lưu cấu hình'}
+            <Save size={18} /> {isDirty ? 'Lưu cấu hình 🌸' : '✓ Đã lưu cấu hình'}
           </button>
         </div>
       </div>
