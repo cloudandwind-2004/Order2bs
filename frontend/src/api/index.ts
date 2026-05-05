@@ -48,6 +48,7 @@ export const menuApi = {
   deleteItem: (id: string) => api.delete(`/api/admin/items/${id}`),
   saveComboRule: (sessionId: string, data: any) =>
     api.post(`/api/admin/sessions/${sessionId}/combo`, data),
+  bulkImportMenu: (id: string, text: string) => api.post(`/api/admin/sessions/${id}/menu/bulk`, { text }),
 };
 
 // ─── Orders ────────────────────────────────────────────────────

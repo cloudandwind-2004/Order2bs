@@ -2,7 +2,10 @@ package handlers
 
 import (
 	"net/http"
+	"regexp"
+	"strings"
 	"time"
+	"unicode"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -131,6 +134,114 @@ func (h *MenuHandler) GetComboRule(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, rule)
+}
+
+func (h *MenuHandler) BulkImportMenu(c *gin.Context) {
+	sessionID := c.Param("id")
+	var body struct {
+		Text string `json:"text" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	lines := strings.Split(body.Text, "\n")
+	var currentCat *models.MenuCategory
+	currentPrice := 25000.0 // Mặc định
+	catOrder := 1
+
+	// Regex tìm giá kiểu "20k", "20.000", "20000"
+	priceRegex := regexp.MustCompile(`(\d+)\s*[kK]|(\d+[.,]\d+)|\d{4,}`)
+
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+
+		// 1. Kiểm tra nếu là dòng chỉ giá (vd: => 20k 1 món)
+		if strings.Contains(line, "=>") {
+			matches := priceRegex.FindStringSubmatch(line)
+			if len(matches) > 0 {
+				priceStr := matches[0]
+				if strings.HasSuffix(strings.ToLower(priceStr), "k") {
+					val := strings.TrimSuffix(strings.ToLower(priceStr), "k")
+					if p, err := strings.ParseFloat(val, 64); err == nil {
+						currentPrice = p * 1000
+					}
+				} else {
+					// Xử lý dấu chấm/phẩy ngăn cách nghìn
+					cleanPrice := strings.NewReplacer(".", "", ",", "").Replace(priceStr)
+					if p, err := strings.ParseFloat(cleanPrice, 64); err == nil {
+						currentPrice = p
+					}
+				}
+			}
+			continue
+		}
+
+		// 2. Kiểm tra nếu là Category (Dòng có emoji ở đầu hoặc kết thúc bằng dấu :)
+		isHeader := strings.HasSuffix(line, ":")
+		if !isHeader {
+			// Kiểm tra emoji ở đầu (đơn giản hóa: nếu có ký tự không phải alphanumeric/space ở đầu)
+			runes := []rune(line)
+			if len(runes) > 0 && !unicode.IsLetter(runes[0]) && !unicode.IsDigit(runes[0]) {
+				isHeader = true
+			}
+		}
+
+		if isHeader {
+			name := strings.TrimSuffix(line, ":")
+			newCat := models.MenuCategory{
+				SessionID:    parseUUID(sessionID),
+				Name:         name,
+				DisplayOrder: catOrder,
+			}
+			h.DB.Create(&newCat)
+			currentCat = &newCat
+			catOrder++
+			continue
+		}
+
+		// 3. Nếu đã có category, thêm món vào
+		if currentCat != nil {
+			// Check if price is in line (e.g. Heo Quay Giòn Bì 35k/100g)
+			itemPrice := currentPrice
+			matches := priceRegex.FindStringSubmatch(line)
+			if len(matches) > 0 {
+				priceStr := matches[0]
+				priceVal := 0.0
+				if strings.HasSuffix(strings.ToLower(priceStr), "k") {
+					val := strings.TrimSuffix(strings.ToLower(priceStr), "k")
+					if p, err := strings.ParseFloat(val, 64); err == nil {
+						priceVal = p * 1000
+					}
+				} else {
+					cleanPrice := strings.NewReplacer(".", "", ",", "").Replace(priceStr)
+					if p, err := strings.ParseFloat(cleanPrice, 64); err == nil {
+						priceVal = p
+					}
+				}
+				
+				if priceVal > 0 {
+					itemPrice = priceVal
+					// Cắt bỏ phần giá khỏi tên nếu nó nằm ở cuối hoặc gần cuối
+					line = strings.TrimSpace(strings.Split(line, priceStr)[0])
+				}
+			}
+
+			item := models.MenuItem{
+				CategoryID:  currentCat.ID,
+				Name:        line,
+				Price:       itemPrice,
+				IsAvailable: true,
+			}
+			h.DB.Create(&item)
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Bulk import successful"})
 }
 
 // ─── Debt Handler ────────────────────────────────────────────────────────────

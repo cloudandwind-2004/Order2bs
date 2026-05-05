@@ -114,6 +114,7 @@ func main() {
 
 		// Combo Rules
 		admin.POST("/sessions/:id/combo", h.Menu.SaveComboRule)
+		admin.POST("/sessions/:id/menu/bulk", h.Menu.BulkImportMenu)
 
 		// Orders
 		admin.GET("/orders", h.Order.List)

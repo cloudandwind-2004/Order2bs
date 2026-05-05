@@ -4,7 +4,7 @@ import { sessionApi, menuApi } from '@/api';
 import { MealSession, MenuCategory, MenuItem } from '@/types';
 import {
   Plus, Edit2, Trash2,
-  ChevronLeft, X, Utensils, Zap
+  ChevronLeft, X, Utensils, Zap, FileDown
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ComboRulePanel from './ComboRulePanel';
@@ -24,6 +24,10 @@ export default function MenuBuilderPage() {
   const [showItemModal, setShowItemModal] = useState(false);
   const [editingItem, setEditingItem] = useState<Partial<MenuItem> | null>(null);
   const [activeCatID, setActiveCatID] = useState<string | null>(null);
+
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importText, setImportText] = useState('');
+  const [importing, setImporting] = useState(false);
 
   const fetchData = () => {
     if (!id) return;
@@ -86,6 +90,22 @@ export default function MenuBuilderPage() {
       toast.success('Đã xóa món ăn');
       fetchData();
     } catch { toast.error('Lỗi khi xóa'); }
+  };
+
+  const handleBulkImport = async () => {
+    if (!id || !importText.trim()) return;
+    setImporting(true);
+    try {
+      await menuApi.bulkImportMenu(id, importText);
+      toast.success('Đã nhập thực đơn hàng loạt! 🌸');
+      setShowImportModal(false);
+      setImportText('');
+      fetchData();
+    } catch {
+      toast.error('Lỗi khi nhập thực đơn');
+    } finally {
+      setImporting(false);
+    }
   };
 
   if (loading) return <div className="loading-overlay"><div className="spinner" /></div>;
@@ -178,7 +198,14 @@ export default function MenuBuilderPage() {
       {activeTab === 'menu' && (
         <div className="animate-fadein">
           {/* Toolbar */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 'var(--sp-4)' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginBottom: 'var(--sp-4)' }}>
+            <button
+              className="btn btn-ghost"
+              onClick={() => setShowImportModal(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--c-primary)' }}
+            >
+              <FileDown size={18} /> Nhập nhanh (Bulk)
+            </button>
             <button
               className="btn btn-primary"
               onClick={() => {
@@ -340,6 +367,45 @@ export default function MenuBuilderPage() {
               <button type="submit" className="btn btn-primary" style={{ padding: '8px 24px' }}>Lưu món ăn 🌸</button>
             </div>
           </form>
+        </div>
+      )}
+      {/* ── Quick Import Modal ── */}
+      {showImportModal && (
+        <div className="modal-overlay">
+          <div className="modal" style={{ borderRadius: 'var(--r-2xl)', maxWidth: 600, width: '90%' }}>
+            <div className="modal-header" style={{ padding: '20px 28px' }}>
+              <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
+                <FileDown size={20} color="var(--c-primary)" /> Nhập thực đơn nhanh
+              </h3>
+              <button type="button" className="btn-icon" onClick={() => setShowImportModal(false)}><X size={20} /></button>
+            </div>
+            <div className="modal-body" style={{ padding: '28px' }}>
+              <p style={{ fontSize: '0.85rem', color: 'var(--c-text-muted)', marginBottom: 16 }}>
+                Dán danh sách món ăn vào đây. Hệ thống sẽ tự tách Nhóm và Món dựa trên dấu ":" hoặc Emoji.
+                Sử dụng "=> 20k" để đặt giá cho nhóm món bên dưới.
+              </p>
+              <textarea
+                className="input"
+                rows={12}
+                placeholder={"Ví dụ:\n🥓 Món Chính:\nSườn Sốt Cay Ngọt\n=> 20k\n\n🥦 Món Rau:\nRau Cải Luộc\n=> 10k"}
+                value={importText}
+                onChange={e => setImportText(e.target.value)}
+                style={{ fontFamily: 'monospace', fontSize: '0.9rem', resize: 'vertical' }}
+              />
+            </div>
+            <div className="modal-footer" style={{ padding: '18px 28px' }}>
+              <button type="button" className="btn btn-ghost" onClick={() => setShowImportModal(false)}>Đóng</button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleBulkImport}
+                disabled={importing || !importText.trim()}
+                style={{ padding: '8px 32px' }}
+              >
+                {importing ? 'Đang xử lý...' : 'Bắt đầu nhập 🌸'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
