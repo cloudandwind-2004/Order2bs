@@ -200,20 +200,11 @@ export default function MenuBuilderPage() {
           {/* Toolbar */}
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginBottom: 'var(--sp-4)' }}>
             <button
-              className="btn btn-ghost"
-              onClick={() => setShowImportModal(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--c-primary)' }}
-            >
-              <FileDown size={18} /> Nhập nhanh (Bulk)
-            </button>
-            <button
               className="btn btn-primary"
-              onClick={() => {
-                setEditingCat({ name: '', display_order: (session.categories?.length || 0) + 1 });
-                setShowCatModal(true);
-              }}
+              onClick={() => setShowImportModal(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 24px', borderRadius: 'var(--r-xl)' }}
             >
-              <Plus size={18} strokeWidth={2.5} /> Thêm danh mục
+              <Zap size={18} fill="currentColor" /> NHẬP THỰC ĐƠN NHANH (BULK)
             </button>
           </div>
 
@@ -221,9 +212,11 @@ export default function MenuBuilderPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sp-8)' }}>
             {!session.categories || session.categories.length === 0 ? (
               <div className="card" style={{ border: '2px dashed var(--c-border-light)', background: 'transparent' }}>
-                <div className="card-body empty-state" style={{ padding: '60px' }}>
+                <div className="card-body empty-state" style={{ padding: '80px' }}>
                   <Utensils size={48} color="var(--c-text-light)" />
-                  <p style={{ marginTop: 12 }}>Chưa có danh mục nào. Hãy bắt đầu kiến tạo thực đơn ngay!</p>
+                  <p style={{ marginTop: 12, fontWeight: 700 }}>Chưa có thực đơn nào.</p>
+                  <p style={{ fontSize: '0.9rem', color: 'var(--c-text-muted)', marginBottom: 20 }}>Sử dụng nút "Nhập nhanh" ở trên để tạo thực đơn hàng loạt bằng cách dán văn bản.</p>
+                  <button className="btn btn-primary" onClick={() => setShowImportModal(true)}>Bắt đầu ngay 🚀</button>
                 </div>
               </div>
             ) : (
@@ -247,12 +240,6 @@ export default function MenuBuilderPage() {
                       </span>
                     </div>
                     <div style={{ display: 'flex', gap: 'var(--sp-2)' }}>
-                      <button
-                        className="btn btn-primary btn-sm"
-                        onClick={() => { setActiveCatID(cat.id); setEditingItem({ name: '', price: 25000 }); setShowItemModal(true); }}
-                      >
-                        <Plus size={14} strokeWidth={3} /> THÊM MÓN
-                      </button>
                       <button className="btn-icon" style={{ background: '#fff', border: '1px solid var(--c-border-light)' }} onClick={() => { setEditingCat(cat); setShowCatModal(true); }}>
                         <Edit2 size={16} />
                       </button>
@@ -264,7 +251,7 @@ export default function MenuBuilderPage() {
                   <div className="card-body" style={{ padding: 0 }}>
                     {!cat.items || cat.items.length === 0 ? (
                       <div style={{ padding: '28px', textAlign: 'center', color: 'var(--c-text-muted)', fontSize: '0.85rem' }}>
-                        Chưa có món ăn nào. Nhấn "Thêm món" để bắt đầu.
+                        Danh mục này chưa có món ăn. Hãy dùng Nhập nhanh để thêm.
                       </div>
                     ) : (
                       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
