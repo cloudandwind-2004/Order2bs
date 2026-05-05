@@ -328,6 +328,9 @@ type SelfCookHandler struct{ DB *gorm.DB }
 func (h *SelfCookHandler) ListLogs(c *gin.Context) {
 	var logs []models.SelfCookLog
 	h.DB.Preload("User").Preload("Session").Where("is_paid = false").Order("created_at desc").Find(&logs)
+	if logs == nil {
+		logs = []models.SelfCookLog{}
+	}
 	c.JSON(http.StatusOK, logs)
 }
 
@@ -356,6 +359,9 @@ func (h *SelfCookHandler) GroupedSummary(c *gin.Context) {
 		GROUP BY u.id, u.full_name, u.phone, u.payment_qr_url
 	`).Scan(&results)
 
+	if results == nil {
+		results = []UserSubsidy{}
+	}
 	c.JSON(http.StatusOK, results)
 }
 

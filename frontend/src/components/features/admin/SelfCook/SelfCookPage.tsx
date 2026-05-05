@@ -26,8 +26,8 @@ export default function SelfCookPage() {
         selfCookApi.listAdmin(),
         selfCookApi.summaryAdmin()
       ]);
-      setLogs(logsRes.data);
-      setGrouped(summaryRes.data);
+      setLogs(logsRes.data || []);
+      setGrouped(summaryRes.data || []);
     } catch {
       toast.error('Không thể tải danh sách trợ cấp');
     } finally {
@@ -54,7 +54,7 @@ export default function SelfCookPage() {
 
   if (loading) return <div className="loading-overlay"><div className="spinner" /></div>;
 
-  const totalSubsidy = grouped.reduce((sum, item) => sum + item.total_amount, 0);
+  const totalSubsidy = (grouped || []).reduce((sum, item) => sum + (item.total_amount || 0), 0);
 
   const getInitials = (name: string) => {
     return name.split(' ').pop()?.charAt(0).toUpperCase() || '🌸';
