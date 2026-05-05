@@ -109,11 +109,17 @@ func (h *SessionHandler) Update(c *gin.Context) {
 	if v, ok := updates["day_of_week"].(string); ok {
 		session.DayOfWeek = v
 	}
-	if v, ok := updates["start_date"].(string); ok {
-		session.StartDate = v
+	if v, ok := updates["start_date"].(string); ok && v != "" {
+		if t, err := time.Parse(time.RFC3339, v); err == nil {
+			session.StartDate = t
+		}
 	}
-	if v, ok := updates["end_date"].(string); ok {
-		session.EndDate = v
+	if v, ok := updates["end_date"].(string); ok && v != "" {
+		if t, err := time.Parse(time.RFC3339, v); err == nil {
+			session.EndDate = &t
+		} else {
+			session.EndDate = nil
+		}
 	}
 
 	if err := h.DB.Save(&session).Error; err != nil {
