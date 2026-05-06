@@ -30,10 +30,8 @@ func (h *MenuHandler) GetSessionMenu(c *gin.Context) {
 		}
 		return
 	}
-	// Kiểm tra xem đã có đơn nào trong buổi này ở trạng thái 'shipping' hoặc 'delivered' chưa
-	var lockedCount int64
-	h.DB.Model(&models.Order{}).Where("session_id = ? AND status IN ('shipping', 'delivered')", id).Count(&lockedCount)
-	isLocked := lockedCount > 0
+	// Disable auto-locking: allow ordering even if some orders are shipping
+	isLocked := false
 
 	// Gộp kết quả trả về
 	c.JSON(http.StatusOK, gin.H{
