@@ -174,7 +174,7 @@ func (h *OrderHandler) Create(c *gin.Context) {
 	}
 
 	// Broadcast realtime
-	h.DB.Preload("User").Preload("Session").Preload("MenuItem").First(&order, "id = ?", order.ID)
+	h.DB.Preload("User").Preload("Session").Preload("MenuItem").Preload("Items.MenuItem").First(&order, "id = ?", order.ID)
 	h.Hub.BroadcastMessage(websocket.MsgNewOrder, order)
 
 	c.JSON(http.StatusCreated, gin.H{
