@@ -41,14 +41,20 @@ export default function OrderFormPage() {
     setIsSelfCook(false);
     setCart(prev => {
       const cur = prev[item.id];
+      const currentTotal = Object.values(prev).reduce((s, v) => s + v.qty, 0);
+
       if (!comboRule) {
         // single-select mode: replace
         return { [item.id]: { item, qty: 1 } };
       }
-      // multi-select: toggle or increment
+
+      // multi-select: limit to required_items
+      if (currentTotal >= comboRule.required_items && !cur) {
+        toast.error(`Combo này chỉ tối đa ${comboRule.required_items} món thôi 🌸`);
+        return prev;
+      }
+
       if (cur && cur.qty > 0) {
-        // if already at max allowed (required_items), don't exceed
-        if (totalItems >= comboRule.required_items && !cur) return prev;
         return { ...prev, [item.id]: { item, qty: cur.qty + 1 } };
       }
       return { ...prev, [item.id]: { item, qty: 1 } };
@@ -271,7 +277,7 @@ export default function OrderFormPage() {
                               boxShadow: isSelected ? '0 8px 20px rgba(201,116,147,0.12)' : 'var(--shadow-card)',
                               transform: isSelected ? 'scale(1.01)' : 'none',
                             }}
-                            onClick={() => !comboRule && addItem(item)}
+                            onClick={() => addItem(item)}
                           >
                             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-4)' }}>
                               <div style={{ width: 44, height: 44, borderRadius: 'var(--r-md)', background: 'var(--c-primary-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.3rem' }}>
