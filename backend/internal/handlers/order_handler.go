@@ -187,7 +187,7 @@ func (h *OrderHandler) MyOrders(c *gin.Context) {
 	userID, _ := c.Get("user_id")
 	var orders []models.Order
 	h.DB.Where("user_id = ?", userID).
-		Preload("Session").Preload("MenuItem").
+		Preload("Session").Preload("MenuItem").Preload("Items.MenuItem").
 		Order("created_at desc").Find(&orders)
 	c.JSON(http.StatusOK, orders)
 }

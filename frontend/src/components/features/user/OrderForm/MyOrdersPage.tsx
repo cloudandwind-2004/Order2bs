@@ -112,15 +112,24 @@ export default function MyOrdersPage() {
                     <div style={{ fontSize: '0.7rem', color: 'var(--c-primary)', fontWeight: 700, letterSpacing: '1px', marginBottom: 4 }}>
                       🌸 {order.session?.name?.toUpperCase()}
                     </div>
-                    <h3 style={{ fontSize: '1.25rem', marginBottom: 8, color: 'var(--c-text)' }}>
+                    <h3 style={{ fontSize: '1.25rem', marginBottom: 8, color: 'var(--c-text)', lineHeight: 1.3 }}>
                       {order.is_self_cook ? (
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
                           🍳 Tự chuẩn bị cơm
                         </span>
                       ) : (
-                        order.items && order.items.length > 0 
-                          ? order.items.map(i => i.menu_item?.name).filter(Boolean).join(' + ')
-                          : order.menu_item?.name
+                        <>
+                          {order.items && order.items.length > 1 && (
+                            <span style={{ 
+                              fontSize: '0.6rem', background: 'var(--c-primary)', 
+                              color: '#fff', padding: '2px 8px', borderRadius: '4px',
+                              verticalAlign: 'middle', marginRight: 8, fontWeight: 900
+                            }}>COMBO</span>
+                          )}
+                          {order.items && order.items.length > 0 
+                            ? order.items.map(i => i.menu_item?.name).filter(Boolean).join(' + ')
+                            : order.menu_item?.name}
+                        </>
                       )}
                     </h3>
                     <div className="jp-divider" style={{ margin: '8px 0', opacity: 0.3 }} />

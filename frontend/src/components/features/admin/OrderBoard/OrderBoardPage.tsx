@@ -258,10 +258,20 @@ export default function OrderBoardPage() {
                         {order.is_self_cook ? (
                           <div style={{ color: 'var(--c-text-muted)', fontStyle: 'italic' }}>🍳 Tự chuẩn bị</div>
                         ) : (
-                          <div style={{ fontWeight: 600, color: 'var(--c-primary-dark)' }}>
-                            🍱 {order.items && order.items.length > 0 
-                                ? order.items.map(i => i.menu_item?.name).filter(Boolean).join(' + ')
-                                : order.menu_item?.name}
+                          <div>
+                            {order.items && order.items.length > 1 && (
+                              <div style={{ 
+                                display: 'inline-block', padding: '2px 6px', 
+                                background: 'var(--c-primary)', color: '#fff', 
+                                borderRadius: 4, fontSize: '0.65rem', fontWeight: 900,
+                                marginBottom: 4
+                              }}>COMBO</div>
+                            )}
+                            <div style={{ fontWeight: 600, color: 'var(--c-primary-dark)', lineHeight: 1.4 }}>
+                              🍱 {order.items && order.items.length > 0 
+                                  ? order.items.map(i => i.menu_item?.name).filter(Boolean).join(' + ')
+                                  : order.menu_item?.name}
+                            </div>
                           </div>
                         )}
                         {order.note && <div style={{ marginTop: 4, padding: '4px 8px', background: 'var(--c-bg-alt)', borderRadius: 4, fontSize: '0.75rem' }}>💬 {order.note}</div>}
