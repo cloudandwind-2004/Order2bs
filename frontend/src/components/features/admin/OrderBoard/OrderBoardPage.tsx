@@ -127,14 +127,33 @@ export default function OrderBoardPage() {
 
   const getSummary = () => {
     const summary: Record<string, { count: number; userDetails: { name: string; note: string }[] }> = {};
+    
     orders.filter(o => o.status === 'pending').forEach(o => {
-      const name = o.is_self_cook ? 'Tự chuẩn bị (Mang cơm)' : (o.menu_item?.name || 'Món khác');
-      if (!summary[name]) summary[name] = { count: 0, userDetails: [] };
-      summary[name].count++;
-      summary[name].userDetails.push({
-        name: o.user?.full_name || 'N/A',
-        note: o.note || ''
-      });
+      if (o.is_self_cook) {
+        const name = '🍳 Tự chuẩn bị (Mang cơm)';
+        if (!summary[name]) summary[name] = { count: 0, userDetails: [] };
+        summary[name].count++;
+        summary[name].userDetails.push({ name: o.user?.full_name || 'N/A', note: o.note || '' });
+        return;
+      }
+
+      // If it's a combo or multi-item order
+      if (o.items && o.items.length > 0) {
+        o.items.forEach(oi => {
+          const name = oi.menu_item?.name || 'Món không tên';
+          if (!summary[name]) summary[name] = { count: 0, userDetails: [] };
+          summary[name].count += oi.quantity || 1;
+          summary[name].userDetails.push({ 
+            name: o.user?.full_name || 'N/A', 
+            note: `${oi.note ? `[${oi.note}]` : ''} ${o.note ? `(${o.note})` : ''}`.trim() 
+          });
+        });
+      } else if (o.menu_item) {
+        const name = o.menu_item.name;
+        if (!summary[name]) summary[name] = { count: 0, userDetails: [] };
+        summary[name].count++;
+        summary[name].userDetails.push({ name: o.user?.full_name || 'N/A', note: o.note || '' });
+      }
     });
     return summary;
   };
@@ -239,7 +258,11 @@ export default function OrderBoardPage() {
                         {order.is_self_cook ? (
                           <div style={{ color: 'var(--c-text-muted)', fontStyle: 'italic' }}>🍳 Tự chuẩn bị</div>
                         ) : (
-                          <div style={{ fontWeight: 600, color: 'var(--c-primary-dark)' }}>🍱 {order.menu_item?.name}</div>
+                          <div style={{ fontWeight: 600, color: 'var(--c-primary-dark)' }}>
+                            🍱 {order.items && order.items.length > 0 
+                                ? order.items.map(i => i.menu_item?.name).filter(Boolean).join(' + ')
+                                : order.menu_item?.name}
+                          </div>
                         )}
                         {order.note && <div style={{ marginTop: 4, padding: '4px 8px', background: 'var(--c-bg-alt)', borderRadius: 4, fontSize: '0.75rem' }}>💬 {order.note}</div>}
                       </div>

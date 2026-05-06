@@ -118,7 +118,9 @@ export default function MyOrdersPage() {
                           🍳 Tự chuẩn bị cơm
                         </span>
                       ) : (
-                        order.menu_item?.name
+                        order.items && order.items.length > 0 
+                          ? order.items.map(i => i.menu_item?.name).filter(Boolean).join(' + ')
+                          : order.menu_item?.name
                       )}
                     </h3>
                     <div className="jp-divider" style={{ margin: '8px 0', opacity: 0.3 }} />

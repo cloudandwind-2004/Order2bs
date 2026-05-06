@@ -194,7 +194,7 @@ func (h *OrderHandler) MyOrders(c *gin.Context) {
 
 func (h *OrderHandler) List(c *gin.Context) {
 	var orders []models.Order
-	q := h.DB.Preload("User").Preload("Session").Preload("MenuItem").Order("created_at desc")
+	q := h.DB.Preload("User").Preload("Session").Preload("MenuItem").Preload("Items.MenuItem").Order("created_at desc")
 
 	if sessionID := c.Query("session_id"); sessionID != "" {
 		q = q.Where("session_id = ?", sessionID)

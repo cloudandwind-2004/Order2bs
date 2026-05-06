@@ -71,6 +71,16 @@ export interface ComboRule {
 // ─── Order ────────────────────────────────────────────────────
 export type OrderStatus = 'pending' | 'confirmed' | 'shipping' | 'delivered' | 'cancelled';
 
+export interface OrderItem {
+  id: string;
+  order_id: string;
+  item_id?: string;
+  quantity: number;
+  note?: string;
+  price_snapshot: number;
+  menu_item?: MenuItem;
+}
+
 export interface Order {
   id: string;
   user_id: string;
@@ -88,6 +98,7 @@ export interface Order {
   user?: User;
   session?: MealSession;
   menu_item?: MenuItem;
+  items?: OrderItem[];
 }
 
 // ─── Debt ─────────────────────────────────────────────────────
