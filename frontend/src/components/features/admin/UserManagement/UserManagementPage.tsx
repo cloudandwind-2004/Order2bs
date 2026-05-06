@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { adminUserApi } from '@/api';
 import { User } from '@/types';
-import { Check, X, Trash2, Search, Filter, UserCog, UserCheck, UserPlus, ShieldAlert } from 'lucide-react';
+import { Check, X, Trash2, Search, Filter, UserCog, UserCheck, UserPlus, ShieldAlert, Edit2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function UserManagementPage() {
@@ -9,6 +9,10 @@ export default function UserManagementPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>('');
   const [search, setSearch] = useState('');
+
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingUser, setEditingUser] = useState<Partial<User> | null>(null);
+  const [updating, setUpdating] = useState(false);
 
   const fetchUsers = () => {
     setLoading(true);
@@ -51,6 +55,24 @@ export default function UserManagementPage() {
       fetchUsers();
     } catch {
       toast.error('Lỗi khi xóa người dùng');
+    }
+  };
+
+  const handleUpdate = async () => {
+    if (!editingUser?.id) return;
+    setUpdating(true);
+    try {
+      await adminUserApi.update(editingUser.id, {
+        role_in_company: editingUser.role_in_company,
+        role: editingUser.role
+      });
+      toast.success('Cập nhật nhân viên thành công!');
+      setShowEditModal(false);
+      fetchUsers();
+    } catch {
+      toast.error('Lỗi khi cập nhật');
+    } finally {
+      setUpdating(false);
     }
   };
 
@@ -183,6 +205,14 @@ export default function UserManagementPage() {
                         )}
                         <button 
                           className="btn-icon" 
+                          style={{ color: 'var(--c-primary)' }}
+                          title="Chỉnh sửa thông tin"
+                          onClick={() => { setEditingUser(user); setShowEditModal(true); }}
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                        <button 
+                          className="btn-icon" 
                           style={{ color: 'var(--c-text-light)' }}
                           title="Xóa vĩnh viễn"
                           onClick={() => handleDelete(user.id)}
@@ -208,6 +238,55 @@ export default function UserManagementPage() {
             </p>
          </div>
       </div>
+      {/* ── Edit User Modal ── */}
+      {showEditModal && editingUser && (
+        <div className="modal-overlay">
+          <div className="modal" style={{ maxWidth: 400, width: '90%' }}>
+            <div className="modal-header">
+              <h3 style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <UserCog size={20} color="var(--c-primary)" /> Chỉnh sửa nhân viên
+              </h3>
+              <button className="btn-icon" onClick={() => setShowEditModal(false)}><X size={20} /></button>
+            </div>
+            <div className="modal-body" style={{ padding: '24px' }}>
+              <div className="input-group">
+                <label style={{ fontWeight: 800, fontSize: '0.75rem', color: 'var(--c-primary)', marginBottom: 8, display: 'block' }}>HỌ TÊN</label>
+                <input className="input" value={editingUser.full_name} disabled style={{ background: 'var(--c-bg-alt)' }} />
+              </div>
+              <div className="input-group" style={{ marginTop: 16 }}>
+                <label style={{ fontWeight: 800, fontSize: '0.75rem', color: 'var(--c-primary)', marginBottom: 8, display: 'block' }}>BỘ PHẬN / ROLE TRONG CÔNG TY</label>
+                <input 
+                  className="input" 
+                  value={editingUser.role_in_company || ''} 
+                  onChange={e => setEditingUser({ ...editingUser, role_in_company: e.target.value })} 
+                  placeholder="Ví dụ: Dev, HR, BA..."
+                />
+              </div>
+              <div className="input-group" style={{ marginTop: 16 }}>
+                <label style={{ fontWeight: 800, fontSize: '0.75rem', color: 'var(--c-primary)', marginBottom: 8, display: 'block' }}>QUYỀN HỆ THỐNG</label>
+                <select 
+                  className="input" 
+                  value={editingUser.role} 
+                  onChange={e => setEditingUser({ ...editingUser, role: e.target.value as any })}
+                >
+                  <option value="user">Nhân viên (User)</option>
+                  <option value="admin">Quản trị viên (Admin)</option>
+                </select>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-ghost" onClick={() => setShowEditModal(false)}>Hủy</button>
+              <button 
+                className="btn btn-primary" 
+                onClick={handleUpdate}
+                disabled={updating}
+              >
+                {updating ? 'Đang lưu...' : 'Lưu thay đổi 🌸'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

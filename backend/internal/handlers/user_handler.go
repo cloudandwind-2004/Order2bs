@@ -59,3 +59,29 @@ func (h *UserHandler) Delete(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "user deleted"})
 }
+
+func (h *UserHandler) Update(c *gin.Context) {
+	id := c.Param("id")
+	var body struct {
+		RoleInCompany string `json:"role_in_company"`
+		Role          string `json:"role"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	updates := make(map[string]interface{})
+	if body.RoleInCompany != "" {
+		updates["role_in_company"] = body.RoleInCompany
+	}
+	if body.Role != "" {
+		updates["role"] = body.Role
+	}
+
+	if err := h.DB.Model(&models.User{}).Where("id = ?", id).Updates(updates).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "user updated"})
+}

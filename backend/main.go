@@ -96,6 +96,7 @@ func main() {
 		admin.GET("/users", h.User.List)
 		admin.PATCH("/users/:id/approve", h.User.Approve)
 		admin.PATCH("/users/:id/reject", h.User.Reject)
+		admin.PATCH("/users/:id", h.User.Update)
 		admin.DELETE("/users/:id", h.User.Delete)
 
 		// Meal Sessions

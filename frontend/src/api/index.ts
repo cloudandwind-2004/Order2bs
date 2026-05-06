@@ -21,6 +21,7 @@ export const adminUserApi = {
   list: (status?: string) => api.get<User[]>('/api/admin/users', { params: { status } }),
   approve: (id: string) => api.patch(`/api/admin/users/${id}/approve`),
   reject: (id: string) => api.patch(`/api/admin/users/${id}/reject`),
+  update: (id: string, data: Partial<User>) => api.patch(`/api/admin/users/${id}`, data),
   delete: (id: string) => api.delete(`/api/admin/users/${id}`),
 };
 
