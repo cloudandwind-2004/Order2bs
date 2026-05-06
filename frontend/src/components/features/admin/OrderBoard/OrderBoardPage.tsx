@@ -161,24 +161,19 @@ export default function OrderBoardPage() {
 
   const handleCopySummary = () => {
     const summaryData = getSummary();
-    const sessionName = sessions.find(s => s.id === selectedSessionID)?.name || 'Hôm nay';
-    let text = `--- 📋 TỔNG HỢP ĐƠN HÀNG [${sessionName.toUpperCase()}] ---\n\n`;
-
-    let totalItems = 0;
+    let text = "";
     Object.entries(summaryData).forEach(([key, data]) => {
-      totalItems += data.count;
-      text += `• [${data.count}] ${key.toUpperCase()}\n`;
-      text += `  └─ ${data.userDetails.map(u => u.name).join(', ')}\n`;
-      if (data.userDetails.some(u => u.note)) {
-         text += `  └─ Ghi chú: ${data.userDetails.filter(u => u.note).map(u => `${u.name}(${u.note})`).join('; ')}\n`;
-      }
-      text += `\n`;
+      // Format: [Count] [Items (joined by +)]
+      text += `${data.count} ${key}\n`;
     });
-    text += `=> TỔNG CỘNG: ${totalItems} SUẤT\n`;
-    text += `------------------------------------------`;
 
-    navigator.clipboard.writeText(text);
-    toast.success('Đã sao chép danh sách vào bộ nhớ tạm! 📋');
+    if (!text) {
+      toast.error('Không có đơn hàng nào để copy');
+      return;
+    }
+
+    navigator.clipboard.writeText(text.trim());
+    toast.success('Đã sao chép danh sách đơn hàng! 📋');
   };
 
   const handlePrint = () => {
