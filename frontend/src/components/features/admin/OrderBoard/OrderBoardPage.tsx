@@ -126,36 +126,37 @@ export default function OrderBoardPage() {
   const ordersByStatus = (status: string) => orders.filter(o => o.status === status);
 
   const getSummary = () => {
-    const summary: Record<string, { count: number; userDetails: { name: string; note: string }[] }> = {};
+    // Group by unique set of items
+    const groups: Record<string, { items: string[]; count: number; userDetails: { name: string; note: string }[] }> = {};
     
     orders.filter(o => o.status === 'pending').forEach(o => {
       if (o.is_self_cook) {
-        const name = '🍳 Tự chuẩn bị (Mang cơm)';
-        if (!summary[name]) summary[name] = { count: 0, userDetails: [] };
-        summary[name].count++;
-        summary[name].userDetails.push({ name: o.user?.full_name || 'N/A', note: o.note || '' });
+        const key = 'SELF_COOK';
+        if (!groups[key]) groups[key] = { items: ['🍳 Tự chuẩn bị (Mang cơm)'], count: 0, userDetails: [] };
+        groups[key].count++;
+        groups[key].userDetails.push({ name: o.user?.full_name || 'N/A', note: o.note || '' });
         return;
       }
 
-      // If it's a combo or multi-item order
-      if (o.items && o.items.length > 0) {
-        o.items.forEach(oi => {
-          const name = oi.menu_item?.name || 'Món không tên';
-          if (!summary[name]) summary[name] = { count: 0, userDetails: [] };
-          summary[name].count += oi.quantity || 1;
-          summary[name].userDetails.push({ 
-            name: o.user?.full_name || 'N/A', 
-            note: `${oi.note ? `[${oi.note}]` : ''} ${o.note ? `(${o.note})` : ''}`.trim() 
-          });
-        });
-      } else if (o.menu_item) {
-        const name = o.menu_item.name;
-        if (!summary[name]) summary[name] = { count: 0, userDetails: [] };
-        summary[name].count++;
-        summary[name].userDetails.push({ name: o.user?.full_name || 'N/A', note: o.note || '' });
+      // Create a unique key for this set of items
+      const itemNames = (o.items && o.items.length > 0) 
+        ? o.items.map(i => i.menu_item?.name || 'Món không tên').sort()
+        : [o.menu_item?.name || 'Món khác'];
+      
+      const key = itemNames.join(' + ');
+      
+      if (!groups[key]) {
+        groups[key] = { items: itemNames, count: 0, userDetails: [] };
       }
+      
+      groups[key].count++;
+      groups[key].userDetails.push({ 
+        name: o.user?.full_name || 'N/A', 
+        note: o.note || ''
+      });
     });
-    return summary;
+
+    return groups;
   };
 
   const handleCopySummary = () => {
@@ -164,12 +165,15 @@ export default function OrderBoardPage() {
     let text = `--- 📋 TỔNG HỢP ĐƠN HÀNG [${sessionName.toUpperCase()}] ---\n\n`;
 
     let totalItems = 0;
-    Object.entries(summaryData).forEach(([name, data], index) => {
+    Object.entries(summaryData).forEach(([key, data]) => {
       totalItems += data.count;
-      const details = data.userDetails.map(u => `${u.name}${u.note ? ` (${u.note})` : ''}`).join(', ');
-      text += `${index + 1}. ${name}: ${data.count} suất\n   👉 (${details})\n\n`;
+      text += `• [${data.count}] ${key.toUpperCase()}\n`;
+      text += `  └─ ${data.userDetails.map(u => u.name).join(', ')}\n`;
+      if (data.userDetails.some(u => u.note)) {
+         text += `  └─ Ghi chú: ${data.userDetails.filter(u => u.note).map(u => `${u.name}(${u.note})`).join('; ')}\n`;
+      }
+      text += `\n`;
     });
-
     text += `=> TỔNG CỘNG: ${totalItems} SUẤT\n`;
     text += `------------------------------------------`;
 
@@ -349,10 +353,15 @@ export default function OrderBoardPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {Object.entries(getSummary()).map(([name, data]) => (
-                        <tr key={name} style={{ borderBottom: '1px dashed #ccc', fontSize: '0.95rem' }}>
-                          <td style={{ padding: '15px 0', verticalAlign: 'top', fontWeight: 'bold' }}>
-                            {name.toUpperCase()}
+                      {Object.entries(getSummary()).map(([key, data]) => (
+                        <tr key={key} style={{ borderBottom: '1px dashed #ccc', fontSize: '0.95rem' }}>
+                          <td style={{ padding: '15px 0', verticalAlign: 'top' }}>
+                            {data.items.length > 1 && (
+                              <div style={{ fontSize: '0.65rem', fontWeight: 900, color: '#C9748F', marginBottom: 4 }}>COMBO</div>
+                            )}
+                            <div style={{ fontWeight: 'bold', lineHeight: 1.4 }}>
+                              {data.items.join(' + ').toUpperCase()}
+                            </div>
                           </td>
                           <td style={{ padding: '15px 0', textAlign: 'center', verticalAlign: 'top', fontWeight: 800 }}>
                             {data.count}
