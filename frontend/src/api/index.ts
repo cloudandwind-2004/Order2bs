@@ -22,6 +22,7 @@ export const adminUserApi = {
   approve: (id: string) => api.patch(`/api/admin/users/${id}/approve`),
   reject: (id: string) => api.patch(`/api/admin/users/${id}/reject`),
   update: (id: string, data: Partial<User>) => api.patch(`/api/admin/users/${id}`, data),
+  resetPassword: (id: string) => api.post(`/api/admin/users/${id}/reset-password`),
   delete: (id: string) => api.delete(`/api/admin/users/${id}`),
 };
 

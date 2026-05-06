@@ -97,6 +97,7 @@ func main() {
 		admin.PATCH("/users/:id/approve", h.User.Approve)
 		admin.PATCH("/users/:id/reject", h.User.Reject)
 		admin.PATCH("/users/:id", h.User.Update)
+		admin.POST("/users/:id/reset-password", h.User.ResetPassword)
 		admin.DELETE("/users/:id", h.User.Delete)
 
 		// Meal Sessions

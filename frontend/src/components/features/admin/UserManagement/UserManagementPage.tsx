@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { adminUserApi } from '@/api';
 import { User } from '@/types';
-import { Check, X, Trash2, Search, Filter, UserCog, UserCheck, UserPlus, ShieldAlert, Edit2 } from 'lucide-react';
+import { Check, X, Trash2, Search, Filter, UserCog, UserCheck, UserPlus, ShieldAlert, Edit2, Key } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function UserManagementPage() {
@@ -73,6 +73,16 @@ export default function UserManagementPage() {
       toast.error('Lỗi khi cập nhật');
     } finally {
       setUpdating(false);
+    }
+  };
+
+  const handleResetPassword = async (id: string) => {
+    if (!confirm('Khôi phục mật khẩu về mặc định "123456"?')) return;
+    try {
+      await adminUserApi.resetPassword(id);
+      toast.success('Đã đặt lại mật khẩu về 123456! 🔑');
+    } catch {
+      toast.error('Lỗi khi đặt lại mật khẩu');
     }
   };
 
@@ -274,15 +284,25 @@ export default function UserManagementPage() {
                 </select>
               </div>
             </div>
-            <div className="modal-footer">
-              <button className="btn btn-ghost" onClick={() => setShowEditModal(false)}>Hủy</button>
+            <div className="modal-footer" style={{ justifyContent: 'space-between' }}>
               <button 
-                className="btn btn-primary" 
-                onClick={handleUpdate}
-                disabled={updating}
+                type="button" 
+                className="btn btn-outline" 
+                style={{ color: 'var(--c-warning)', borderColor: 'var(--c-warning)' }}
+                onClick={() => handleResetPassword(editingUser.id!)}
               >
-                {updating ? 'Đang lưu...' : 'Lưu thay đổi 🌸'}
+                <Key size={16} style={{ marginRight: 8 }} /> Reset Pass
               </button>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <button className="btn btn-ghost" onClick={() => setShowEditModal(false)}>Hủy</button>
+                <button 
+                  className="btn btn-primary" 
+                  onClick={handleUpdate}
+                  disabled={updating}
+                >
+                  {updating ? 'Đang lưu...' : 'Lưu thay đổi 🌸'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
