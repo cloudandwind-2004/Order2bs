@@ -39,13 +39,15 @@ func (h *OrderHandler) Create(c *gin.Context) {
 		return
 	}
 
-	// Chặn đặt món nếu đã có đơn hàng nào trong buổi này chuyển sang 'shipping' hoặc 'delivered'
+	// Disable auto-locking in backend to allow late orders
+	/*
 	var hasLockedOrder int64
 	h.DB.Model(&models.Order{}).Where("session_id = ? AND status IN ('shipping', 'delivered')", req.SessionID).Count(&hasLockedOrder)
 	if hasLockedOrder > 0 {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Buổi ăn này đã khóa (đang giao hoặc đã hoàn thành), không thể đặt món thêm!"})
 		return
 	}
+	*/
 
 	order := models.Order{
 		UserID:         parseUUID(userID.(string)),
