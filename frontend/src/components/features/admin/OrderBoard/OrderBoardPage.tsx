@@ -161,16 +161,22 @@ export default function OrderBoardPage() {
 
   const handleCopySummary = () => {
     const summaryData = getSummary();
-    let text = "";
-    Object.entries(summaryData).forEach(([key, data]) => {
-      // Format: [Count] [Items (joined by +)]
-      text += `${data.count} ${key}\n`;
-    });
-
-    if (!text) {
+    const pendingOrders = orders.filter(o => o.status === 'pending');
+    
+    if (pendingOrders.length === 0) {
       toast.error('Không có đơn hàng nào để copy');
       return;
     }
+
+    let text = "--- 📋 TỔNG HỢP ĐƠN HÀNG [HÔM NAY] ---\n\n";
+    
+    Object.entries(summaryData).forEach(([key, data]) => {
+      const displayKey = key === 'SELF_COOK' ? '🍳 TỰ CHUẨN BỊ (MANG CƠM)' : key.toUpperCase();
+      text += `• [${data.count}] ${displayKey}\n`;
+    });
+
+    text += `\n=> TỔNG CỘNG: ${pendingOrders.length} SUẤT\n`;
+    text += "------------------------------------------";
 
     navigator.clipboard.writeText(text.trim());
     toast.success('Đã sao chép danh sách đơn hàng! 📋');
