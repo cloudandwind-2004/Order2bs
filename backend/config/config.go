@@ -25,7 +25,7 @@ func Load() *Config {
 	return &Config{
 		Port:      getEnv("APP_PORT", "8080"),
 		JWTSecret: getEnv("JWT_SECRET", "change_me_secret"),
-		JWTExpire: getEnv("JWT_EXPIRE_HOURS", "24"),
+		JWTExpire: getEnv("JWT_EXPIRE_HOURS", "168"),
 		UploadDir: getEnv("UPLOAD_DIR", "./uploads"),
 		DB: DBConfig{
 			Host:     getEnv("DB_HOST", "localhost"),

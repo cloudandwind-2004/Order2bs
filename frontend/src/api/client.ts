@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { useAuthStore } from '@/store/authStore';
 
 // Mặc định dùng relative URL '/' → request đi qua nginx proxy trong K8s
 // Khi dev local: vite.config.ts proxy '/api' → localhost:8080
@@ -22,7 +23,7 @@ api.interceptors.response.use(
   (res) => res,
   (err) => {
     if (err.response?.status === 401 && !window.location.pathname.includes('/login')) {
-      localStorage.removeItem('token');
+      useAuthStore.getState().logout();
       window.location.href = '/login';
     }
     return Promise.reject(err);
